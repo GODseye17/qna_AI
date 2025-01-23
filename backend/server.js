@@ -8,21 +8,42 @@ const path = require("path");
 const cors = require("cors");
 const { google } = require("googleapis"); 
 
+const express = require("express");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+
 const app = express();
+
+// Middleware to parse JSON requests
 app.use(express.json());
-app.use(cors()); 
 
+// Enable CORS for all routes
+app.use(cors());
 
-const frontendPath = path.join(__dirname, "../public");
+// Serve static files from the frontend directory
+const frontendPath = path.resolve(__dirname, "../public");
 app.use(express.static(frontendPath));
 
+// Directory for file uploads
+const uploadDir = path.resolve(__dirname, "uploads");
 
-const upload = multer({ dest: path.join(__dirname, "uploads/") }); 
-
-
-if (!fs.existsSync(path.join(__dirname, "uploads"))) {
-  fs.mkdirSync(path.join(__dirname, "uploads"));
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true }); // Ensure parent directories are created if needed
+  } catch (error) {
+    console.error(`Error creating uploads directory at ${uploadDir}:`, error.message);
+    throw new Error("Failed to initialize the uploads directory.");
+  }
 }
+
+// Configure Multer for handling file uploads
+const upload = multer({ dest: uploadDir });
+
+module.exports = { app, upload };
+
 
 
 const xlsx = require("xlsx");
