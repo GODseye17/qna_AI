@@ -25,16 +25,33 @@ if (!fs.existsSync(path.join(__dirname, "uploads"))) {
 }
 
 
+const xlsx = require("xlsx");
+
 function parseExcel(filePath) {
-  const workbook = xlsx.readFile(filePath);
-  const sheetNames = workbook.SheetNames;
-  let content = "";
-  sheetNames.forEach((sheetName) => {
-    const sheet = workbook.Sheets[sheetName];
-    content += xlsx.utils.sheet_to_csv(sheet) + "\n";
-  });
-  return content;
+  try {
+    // Read the workbook from the file
+    const workbook = xlsx.readFile(filePath);
+
+    // Get all sheet names in the workbook
+    const sheetNames = workbook.SheetNames;
+
+    // Extract data from each sheet and convert to CSV format
+    const content = sheetNames
+      .map((sheetName) => {
+        const sheet = workbook.Sheets[sheetName];
+        return xlsx.utils.sheet_to_csv(sheet); // Convert each sheet to CSV
+      })
+      .join("\n"); // Join all CSV content with a newline
+
+    // Return the consolidated content
+    return content;
+  } catch (error) {
+    // Log and rethrow the error for better debugging
+    console.error(`Error parsing Excel file at ${filePath}:`, error.message);
+    throw new Error("Failed to parse the Excel file. Please ensure it is a valid file.");
+  }
 }
+
 
 
 const fs = require("fs").promises;
