@@ -54,13 +54,29 @@ async function uploadFile() {
  */
 function displayContent(content) {
   const contentDisplay = document.getElementById("contentDisplay");
-  if (contentDisplay) {
-    contentDisplay.textContent = content;
-  } else {
+
+  // Check if the content display element exists
+  if (!contentDisplay) {
     console.warn("Content display element not found.");
-    alert("File processed, but unable to display the content.");
+    alert("The file was processed, but the content could not be displayed.");
+    return;
   }
+
+  // Clear any previous content before displaying the new content
+  contentDisplay.textContent = "";
+
+  // Create a container for the new content
+  const contentContainer = document.createElement("div");
+  contentContainer.className = "content-container";
+  contentContainer.textContent = content;
+
+  // Append the new content to the content display
+  contentDisplay.appendChild(contentContainer);
+
+  // Scroll the content display to the top for better user experience
+  contentDisplay.scrollTop = 0;
 }
+
 
 /**
  * Toggles a loading indicator during the upload process.
