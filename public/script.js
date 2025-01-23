@@ -77,13 +77,34 @@ function showLoading(isLoading) {
 // Function to display the extracted content in the chat container
 function displayContent(content) {
   const chatContainer = document.getElementById("chatContainer");
-  chatContainer.innerHTML = ""; // Clear previous content
 
+  if (!chatContainer) {
+    console.error("Chat container element not found.");
+    alert("Unable to display the content. Chat container is missing.");
+    return;
+  }
+
+  // Clear previous content
+  chatContainer.innerHTML = "";
+
+  // Create the message container
   const contentMessage = document.createElement("div");
   contentMessage.className = "chat-message extracted-content";
-  contentMessage.innerText = content;
+  contentMessage.textContent = content; // Use textContent for security against XSS
+
+  // Add a timestamp for context
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = `Extracted on: ${new Date().toLocaleString()}`;
+
+  // Append message and timestamp to the chat container
   chatContainer.appendChild(contentMessage);
+  chatContainer.appendChild(timestamp);
+
+  // Scroll to the bottom of the chat container
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
+
 
 // Function to handle asking the Gemini AI
 async function askAI() {
