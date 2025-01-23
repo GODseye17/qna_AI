@@ -37,11 +37,26 @@ function parseExcel(filePath) {
 }
 
 
+const fs = require("fs").promises;
+const pdf = require("pdf-parse");
+
 async function parsePdf(filePath) {
-  const dataBuffer = fs.readFileSync(filePath);
-  const data = await pdf(dataBuffer);
-  return data.text;
+  try {
+    // Read the file asynchronously to avoid blocking the event loop
+    const dataBuffer = await fs.readFile(filePath);
+
+    // Parse the PDF content
+    const { text } = await pdf(dataBuffer);
+
+    // Return the extracted text
+    return text;
+  } catch (error) {
+    // Log and rethrow the error for better debugging
+    console.error(`Error parsing PDF at ${filePath}:`, error.message);
+    throw new Error("Failed to parse the PDF file. Please ensure it is a valid file.");
+  }
 }
+
 
 
 app.post("/upload", upload.single("file"), async (req, res) => {
