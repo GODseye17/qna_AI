@@ -123,27 +123,48 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 
+const axios = require("axios");
+
 app.post("/api/ask", async (req, res) => {
   const { content, question } = req.body;
   const API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!API_KEY) {
+    return res.status(500).json({ error: "API key is not configured" });
+  }
+
   if (!content || !question) {
     return res.status(400).json({ error: "Missing content or question" });
   }
+
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
       {
-        contents: [{
-          parts: [{
-            text: `Context: ${content}\n\nQuestion: ${question}`
-          }]
-        }],
+        contents: [`Context: ${content}\n\nQuestion: ${question}`],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 256
-        }
+          maxOutputTokens: 256,
+        },
       }
-    )};
+    );
+
+    // Validate and return the response
+    if (response.data && response.data.generatedText) {
+      return res.status(200).json({ answer: response.data.generatedText });
+    } else {
+      return res.status(500).json({ error: "Invalid response from API" });
+    }
+  } catch (error) {
+    // Handle API call errors
+    console.error("Error calling the Gemini API:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: "Failed to generate a response from the Gemini API",
+      details: error.response?.data || error.message,
+    });
+  }
+});
+
 
     
     const express = require('express');
