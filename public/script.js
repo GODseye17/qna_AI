@@ -3,7 +3,7 @@ const API_URL = "http://localhost:5001"; // Backend server URL
 // Function to handle file upload
 async function uploadFile() {
   const fileInput = document.getElementById("fileInput");
-  const file = fileInput.files[0];
+  const file = fileInput?.files?.[0]; // Ensure fileInput and file exist
 
   if (!file) {
     alert("Please select a file to upload.");
@@ -14,28 +14,65 @@ async function uploadFile() {
   formData.append("file", file);
 
   try {
+    // Display a loading indicator or feedback to the user
+    showLoading(true);
+
     const response = await fetch(`${API_URL}/upload`, {
       method: "POST",
       body: formData,
     });
 
+    // Handle non-OK responses
     if (!response.ok) {
       const errorData = await response.json();
-      alert(errorData.error || "Failed to process the file.");
+      console.error("Upload error:", errorData);
+      alert(errorData.error || "Failed to process the file. Please try again.");
       return;
     }
 
     const data = await response.json();
-    if (data.content) {
+
+    // Handle response content
+    if (data?.content) {
       displayContent(data.content);
     } else {
       alert("No content was extracted from the file.");
     }
   } catch (error) {
-    console.error("Error uploading file:", error.message);
-    alert("An error occurred while uploading the file. Please try again.");
+    // Catch network errors or unexpected issues
+    console.error("Error uploading file:", error);
+    alert("An error occurred while uploading the file. Please check your connection and try again.");
+  } finally {
+    // Hide the loading indicator or feedback
+    showLoading(false);
   }
 }
+
+/**
+ * Displays the content extracted from the file.
+ * @param {string} content - The extracted content to display.
+ */
+function displayContent(content) {
+  const contentDisplay = document.getElementById("contentDisplay");
+  if (contentDisplay) {
+    contentDisplay.textContent = content;
+  } else {
+    console.warn("Content display element not found.");
+    alert("File processed, but unable to display the content.");
+  }
+}
+
+/**
+ * Toggles a loading indicator during the upload process.
+ * @param {boolean} isLoading - Whether to show or hide the loading indicator.
+ */
+function showLoading(isLoading) {
+  const loadingIndicator = document.getElementById("loadingIndicator");
+  if (loadingIndicator) {
+    loadingIndicator.style.display = isLoading ? "block" : "none";
+  }
+}
+
 
 // Function to display the extracted content in the chat container
 function displayContent(content) {
