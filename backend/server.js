@@ -181,22 +181,32 @@ app.post("/ask", async (req, res) => {
     });
 
     
-    const aiAnswer = response.data.predictions[0].content.trim();
-    res.status(200).json({ answer: aiAnswer });
-  } catch (error) {
-    console.error("Error while querying Gemini API:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to process the request with Gemini API." });
-  }
-});
-
-
-    const aiAnswer = response.data.predictions[0].content.trim();
-    res.json({ answer: aiAnswer });
-  } catch (error) {
-    console.error("Error querying Gemini:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to get Gemini API response." });
-  }
-});
+    const express = require('express');
+    const router = express.Router();
+    
+    router.post('/ai-query', async (req, res) => {
+      try {
+        const response = await queryGeminiAPI(req.body); // Assume queryGeminiAPI is the function making the API call
+        const aiAnswer = response?.data?.predictions?.[0]?.content?.trim();
+    
+        if (!aiAnswer) {
+          throw new Error("AI response is empty or invalid.");
+        }
+    
+        res.status(200).json({ answer: aiAnswer });
+      } catch (error) {
+        const errorMessage = error.response?.data || error.message || "Unknown error occurred.";
+        console.error("Error while querying Gemini API:", errorMessage);
+    
+        res.status(500).json({
+          error: "Failed to process the request with Gemini API.",
+          details: errorMessage, // Include details for debugging purposes
+        });
+      }
+    });
+    
+    module.exports = router;
+    
 
 
 app.get("*", (req, res) => {
