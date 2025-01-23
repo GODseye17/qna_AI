@@ -1,0 +1,64 @@
+body {
+    font-family: "Roboto", sans-serif;
+    background: linear-gradient(120deg, #007bff, #00c6ff);
+    background-attachment: fixed; /* Makes it fixed when scrolling */
+    color: white;
+  }
+
+  /* Hero Section Gradient */
+  .hero-section {
+    background: linear-gradient(90deg, #007bff, #00c6ff);
+    color: white;
+    padding: 50px 0;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Upload Section */
+  .upload-section {
+    background: white;
+    color: #333;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Chat Section Gradient */
+  .chat-section {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Chat Messages */
+  .chat-message {
+    background: rgba(255, 255, 255, 0.1); /* Semi-transparent background */
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  /* Gradient Buttons */
+  .btn-gradient {
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient:hover {
+    background: linear-gradient(90deg, #feb47b, #ff7e5f); /* Reverse gradient */
+    transform: translateY(-2px);
+  }
+
+  footer {
+    background: linear-gradient(90deg, #333, #555);
+    color: white;
+    padding: 20px;
+    text-align: center;
+  }
