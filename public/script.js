@@ -1,9 +1,9 @@
-const API_URL = "http://localhost:5001"; // Backend server URL
+const API_URL = "https://aichat-gemini.vercel.app/";
 
-// Function to handle file upload
+
 async function uploadFile() {
   const fileInput = document.getElementById("fileInput");
-  const file = fileInput?.files?.[0]; // Ensure fileInput and file exist
+  const file = fileInput?.files?.[0]; 
 
   if (!file) {
     alert("Please select a file to upload.");
@@ -14,7 +14,7 @@ async function uploadFile() {
   formData.append("file", file);
 
   try {
-    // Display a loading indicator or feedback to the user
+    
     showLoading(true);
 
     const response = await fetch(`${API_URL}/upload`, {
@@ -22,7 +22,7 @@ async function uploadFile() {
       body: formData,
     });
 
-    // Handle non-OK responses
+   
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Upload error:", errorData);
@@ -32,55 +32,55 @@ async function uploadFile() {
 
     const data = await response.json();
 
-    // Handle response content
+    
     if (data?.content) {
       displayContent(data.content);
     } else {
       alert("No content was extracted from the file.");
     }
   } catch (error) {
-    // Catch network errors or unexpected issues
+    
     console.error("Error uploading file:", error);
     alert("An error occurred while uploading the file. Please check your connection and try again.");
   } finally {
-    // Hide the loading indicator or feedback
+    
     showLoading(false);
   }
 }
 
 /**
- * Displays the content extracted from the file.
- * @param {string} content - The extracted content to display.
+
+ * @param {string} content 
  */
 function displayContent(content) {
   const contentDisplay = document.getElementById("contentDisplay");
 
-  // Check if the content display element exists
+  
   if (!contentDisplay) {
     console.warn("Content display element not found.");
     alert("The file was processed, but the content could not be displayed.");
     return;
   }
 
-  // Clear any previous content before displaying the new content
+  
   contentDisplay.textContent = "";
 
-  // Create a container for the new content
+  
   const contentContainer = document.createElement("div");
   contentContainer.className = "content-container";
   contentContainer.textContent = content;
 
-  // Append the new content to the content display
+  
   contentDisplay.appendChild(contentContainer);
 
-  // Scroll the content display to the top for better user experience
+ 
   contentDisplay.scrollTop = 0;
 }
 
 
 /**
- * Toggles a loading indicator during the upload process.
- * @param {boolean} isLoading - Whether to show or hide the loading indicator.
+ 
+ * @param {boolean} isLoading 
  */
 function showLoading(isLoading) {
   const loadingIndicator = document.getElementById("loadingIndicator");
@@ -90,7 +90,7 @@ function showLoading(isLoading) {
 }
 
 
-// Function to display the extracted content in the chat container
+
 function displayContent(content) {
   const chatContainer = document.getElementById("chatContainer");
 
@@ -100,13 +100,12 @@ function displayContent(content) {
     return;
   }
 
-  // Clear previous content
+  
   chatContainer.innerHTML = "";
 
-  // Create the message container
   const contentMessage = document.createElement("div");
   contentMessage.className = "chat-message extracted-content";
-  contentMessage.textContent = content; // Use textContent for security against XSS
+  contentMessage.textContent = content; 
 
   // Add a timestamp for context
   const timestamp = document.createElement("div");
