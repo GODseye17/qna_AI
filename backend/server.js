@@ -1,4 +1,4 @@
-require("dotenv").config(); // Load environment variables
+require("dotenv").config(); 
 const express = require("express");
 const multer = require("multer");
 const xlsx = require("xlsx");
@@ -6,25 +6,25 @@ const pdf = require("pdf-parse");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const { google } = require("googleapis"); // Google API SDK
+const { google } = require("googleapis"); 
 
 const app = express();
 app.use(express.json());
-app.use(cors()); // Enable CORS for all origins
+app.use(cors()); 
 
-// Serve static files (frontend)
+
 const frontendPath = path.join(__dirname, "../public");
 app.use(express.static(frontendPath));
 
-// Configure Multer for file uploads
-const upload = multer({ dest: path.join(__dirname, "uploads/") }); // Ensure the "uploads" directory exists
 
-// Ensure the uploads directory exists
+const upload = multer({ dest: path.join(__dirname, "uploads/") }); 
+
+
 if (!fs.existsSync(path.join(__dirname, "uploads"))) {
   fs.mkdirSync(path.join(__dirname, "uploads"));
 }
 
-// Function to parse Excel files
+
 function parseExcel(filePath) {
   const workbook = xlsx.readFile(filePath);
   const sheetNames = workbook.SheetNames;
@@ -36,14 +36,14 @@ function parseExcel(filePath) {
   return content;
 }
 
-// Function to parse PDF files
+
 async function parsePdf(filePath) {
   const dataBuffer = fs.readFileSync(filePath);
   const data = await pdf(dataBuffer);
   return data.text;
 }
 
-// Route to upload and process files
+
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const file = req.file;
@@ -51,7 +51,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Supported MIME types
+    
     const supportedMimeTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -59,7 +59,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     ];
 
     if (!supportedMimeTypes.includes(file.mimetype)) {
-      // Cleanup uploaded file if it's not supported
+      
       fs.unlinkSync(file.path);
       return res.status(400).json({ error: "Unsupported file type" });
     }
@@ -74,10 +74,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       content = parseExcel(file.path);
     }
 
-    // Cleanup uploaded file
     fs.unlinkSync(file.path);
 
-    // Respond with parsed content
+    
     res.json({ content });
   } catch (error) {
     console.error("Error processing file:", error.message);
@@ -85,30 +84,37 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// Google Gemini API Integration
+
 app.post("/ask", async (req, res) => {
+  // Extract content and question from the request body
   const { content, question } = req.body;
 
+  // Validate inputs
   if (!content || !question) {
-    return res.status(400).json({ error: "Missing content or question" });
+    return res.status(400).json({ error: "Please provide both content and a question." });
   }
 
   try {
+    
     const auth = new google.auth.GoogleAuth({
       scopes: ["https://www.googleapis.com/auth/cloud-platform"],
     });
 
+   
     const authClient = await auth.getClient();
     const projectId = await auth.getProjectId();
+
+    
     const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/text-bison:predict`;
 
-    const response = await google.auth.request({
+   
+    const response = await authClient.request({
       url: endpoint,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+      data: {
         instances: [
           {
             content: `Context: ${content}\n\nQuestion: ${question}`,
@@ -118,8 +124,18 @@ app.post("/ask", async (req, res) => {
           temperature: 0.7,
           maxOutputTokens: 256,
         },
-      }),
+      },
     });
+
+    
+    const aiAnswer = response.data.predictions[0].content.trim();
+    res.status(200).json({ answer: aiAnswer });
+  } catch (error) {
+    console.error("Error while querying Gemini API:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to process the request with Gemini API." });
+  }
+});
+
 
     const aiAnswer = response.data.predictions[0].content.trim();
     res.json({ answer: aiAnswer });
@@ -129,12 +145,12 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-// Fallback to serve `index.html` for any unknown route
+
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Start the server
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
