@@ -151,12 +151,35 @@ async function askAI() {
 function displayChatMessage(sender, message) {
   const chatContainer = document.getElementById("chatContainer");
 
+  // Check if the chat container exists
+  if (!chatContainer) {
+    console.error("Chat container element not found.");
+    alert("Unable to display the chat message. Chat container is missing.");
+    return;
+  }
+
+  // Create a wrapper for the chat message
+  const messageWrapper = document.createElement("div");
+  messageWrapper.className = `chat-message-wrapper ${sender === "user" ? "user-wrapper" : "ai-wrapper"}`;
+
+  // Create the message content element
   const messageDiv = document.createElement("div");
   messageDiv.className = `chat-message ${sender === "user" ? "user-message" : "ai-message"}`;
-  messageDiv.innerText = message;
+  messageDiv.textContent = message; // Use textContent for security
 
-  chatContainer.appendChild(messageDiv);
+  // Add a timestamp for each message
+  const timestamp = document.createElement("div");
+  timestamp.className = "message-timestamp";
+  timestamp.textContent = new Date().toLocaleTimeString();
+
+  // Append the message and timestamp to the wrapper
+  messageWrapper.appendChild(messageDiv);
+  messageWrapper.appendChild(timestamp);
+
+  // Append the wrapper to the chat container
+  chatContainer.appendChild(messageWrapper);
 
   // Scroll to the bottom of the chat container
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
+
