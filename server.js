@@ -123,47 +123,27 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 
-app.post("/ask", async (req, res) => {
-  // Extract content and question from the request body
+app.post("/api/ask", async (req, res) => {
   const { content, question } = req.body;
-
-  // Validate inputs
+  const API_KEY = process.env.GEMINI_API_KEY;
   if (!content || !question) {
-    return res.status(400).json({ error: "Please provide both content and a question." });
+    return res.status(400).json({ error: "Missing content or question" });
   }
-
   try {
-    
-    const auth = new google.auth.GoogleAuth({
-      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-    });
-
-   
-    const authClient = await auth.getClient();
-    const projectId = await auth.getProjectId();
-
-    
-    const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/text-bison:predict`;
-
-   
-    const response = await authClient.request({
-      url: endpoint,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        instances: [
-          {
-            content: `Context: ${content}\n\nQuestion: ${question}`,
-          },
-        ],
-        parameters: {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`,
+      {
+        contents: [{
+          parts: [{
+            text: `Context: ${content}\n\nQuestion: ${question}`
+          }]
+        }],
+        generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 256,
-        },
-      },
-    });
+          maxOutputTokens: 256
+        }
+      }
+    )};
 
     
     const express = require('express');
