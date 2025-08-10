@@ -945,10 +945,10 @@
   
   <!-- Custom JavaScript -->
   <script>
-    // API Configuration
+    // API Configuration for Local and Vercel
     const API_URL = window.location.hostname === 'localhost' 
       ? 'http://localhost:5001' 
-      : 'https://aichat-gemini.vercel.app';
+      : 'https://qna-ai-8wok.vercel.app'; // Use relative URLs for Vercel
 
     // Global Variables
     let uploadedContent = '';
@@ -958,6 +958,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       setupDragAndDrop();
       animateOnScroll();
+      console.log('App initialized. Environment:', window.location.hostname);
     });
 
     // Drag and Drop Setup
@@ -996,10 +997,10 @@
       }
     }
 
-    // File Upload Handler
+    // File Upload Handler - Updated for Vercel
     async function uploadFile() {
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput?.files?.[0];
 
       if (!file) {
         showToast('Please select a file to upload', 'error');
@@ -1017,7 +1018,7 @@
       document.getElementById('uploadProgress').style.display = 'block';
       
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       try {
         // Simulate upload progress
@@ -1031,7 +1032,14 @@
           }
         }, 200);
 
-        const response = await fetch(`${API_URL}/upload`, {
+        // Use correct endpoint for local vs Vercel
+        const endpoint = window.location.hostname === 'localhost' 
+          ? `${API_URL}/upload`
+          : '/api/upload';
+        
+        console.log('Uploading to:', endpoint);
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           body: formData
         });
@@ -1040,10 +1048,13 @@
         progressBar.style.width = '100%';
 
         if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
+          const errorData = await response.json();
+          console.error('Upload error response:', errorData);
+          throw new Error(errorData.message || errorData.error || 'Upload failed');
         }
 
         const data = await response.json();
+        console.log('Upload successful:', data);
         
         if (data.content) {
           uploadedContent = data.content;
@@ -1062,7 +1073,7 @@
 
       } catch (error) {
         console.error('Upload error:', error);
-        showToast('Failed to upload file. Please try again.', 'error');
+        showToast(error.message || 'Failed to upload file. Please try again.', 'error');
       } finally {
         showLoading(false);
         setTimeout(() => {
@@ -1081,7 +1092,7 @@
       showToast('Document removed', 'info');
     }
 
-    // Send Message
+    // Send Message - Updated for Vercel
     async function sendMessage() {
       const input = document.getElementById('questionInput');
       const question = input.value.trim();
@@ -1110,7 +1121,14 @@
       isProcessing = true;
 
       try {
-        const response = await fetch(`${API_URL}/api/ask`, {
+        // Use correct endpoint for local vs Vercel
+        const endpoint = window.location.hostname === 'localhost' 
+          ? `${API_URL}/api/ask`
+          : '/api/ask';
+        
+        console.log('Sending question to:', endpoint);
+        
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -1122,19 +1140,22 @@
         });
 
         if (!response.ok) {
-          throw new Error(`API request failed: ${response.statusText}`);
+          const errorData = await response.json();
+          console.error('API error response:', errorData);
+          throw new Error(errorData.message || errorData.error || 'Failed to get response');
         }
 
         const data = await response.json();
+        console.log('API response:', data);
         
         // Remove typing indicator and add AI response
         showTypingIndicator(false);
-        addMessage('ai', data.answer || 'I couldn\'t generate a response. Please try again.');
+        addMessage('ai', data.answer || 'No response from AI.');
 
       } catch (error) {
         console.error('API error:', error);
         showTypingIndicator(false);
-        addMessage('ai', '❌ Sorry, I encountered an error. Please try again later.');
+        addMessage('ai', '❌ Sorry, I encountered an error: ' + error.message);
         showToast('Failed to get AI response', 'error');
       } finally {
         isProcessing = false;
@@ -1159,10 +1180,13 @@
 
       const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+      // Format text with line breaks
+      const formattedText = escapeHtml(text).replace(/\n/g, '<br>');
+
       messageDiv.innerHTML = `
         ${avatar}
         <div class="message-content">
-          <div class="message-bubble">${escapeHtml(text)}</div>
+          <div class="message-bubble">${formattedText}</div>
           <div class="message-time">${time}</div>
         </div>
       `;
@@ -1198,12 +1222,19 @@
     // Show Loading Overlay
     function showLoading(show) {
       const overlay = document.getElementById('loadingOverlay');
-      overlay.style.display = show ? 'flex' : 'none';
+      if (overlay) {
+        overlay.style.display = show ? 'flex' : 'none';
+      }
     }
 
     // Toast Notifications
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
+      if (!toastContainer) {
+        console.error('Toast container not found');
+        return;
+      }
+
       const toast = document.createElement('div');
       toast.className = `toast-custom toast-${type}`;
       
@@ -1226,7 +1257,7 @@
       }, 3000);
     }
 
-    // Escape HTML
+    // Escape HTML to prevent XSS
     function escapeHtml(text) {
       const map = {
         '&': '&amp;',
@@ -1235,7 +1266,7 @@
         '"': '&quot;',
         "'": '&#039;'
       };
-      return text.replace(/[&<>"']/g, m => map[m]);
+      return String(text).replace(/[&<>"']/g, m => map[m]);
     }
 
     // Animate on Scroll
@@ -1246,6 +1277,8 @@
             entry.target.classList.add('slide-up');
           }
         });
+      }, {
+        threshold: 0.1
       });
 
       document.querySelectorAll('.glass-card, .feature-card').forEach(el => {
@@ -1255,6 +1288,91 @@
 
     // File Input Change Handler
     document.getElementById('fileInput').addEventListener('change', uploadFile);
+
+    // Enter key handler for question input
+    document.getElementById('questionInput').addEventListener('keypress', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Test API connection on load
+    window.addEventListener('load', async () => {
+      try {
+        const healthEndpoint = window.location.hostname === 'localhost' 
+          ? `${API_URL}/api/health`
+          : '/api/health';
+        
+        const response = await fetch(healthEndpoint);
+        if (response.ok) {
+          console.log('✅ API connection successful');
+        } else {
+          console.warn('⚠️ API health check failed');
+        }
+      } catch (error) {
+        console.error('❌ Cannot connect to API:', error);
+        showToast('Warning: API connection issue. Some features may not work.', 'error');
+      }
+    });
+
+    // Display content function (for backward compatibility)
+    function displayContent(content) {
+      const chatContainer = document.getElementById('chatContainer');
+
+      if (!chatContainer) {
+        console.error('Chat container element not found.');
+        return;
+      }
+
+      const contentMessage = document.createElement('div');
+      contentMessage.className = 'chat-message extracted-content';
+      contentMessage.textContent = content;
+
+      const timestamp = document.createElement('div');
+      timestamp.className = 'timestamp';
+      timestamp.textContent = `Extracted on: ${new Date().toLocaleString()}`;
+
+      chatContainer.appendChild(contentMessage);
+      chatContainer.appendChild(timestamp);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Display chat message function (for backward compatibility)
+    function displayChatMessage(sender, message) {
+      addMessage(sender === 'user' ? 'user' : 'ai', message.replace(/^[QA]: /, ''));
+    }
+
+    // Utility function to format file size
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Check file type before upload
+    function isValidFileType(file) {
+      const validTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ];
+      return validTypes.includes(file.type);
+    }
+
+    // Enhanced file validation
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file && !isValidFileType(file)) {
+        showToast('Invalid file type. Please upload PDF or Excel files only.', 'error');
+        e.target.value = '';
+        return;
+      }
+    });
+
+    console.log('🚀 AI Document Assistant initialized');
   </script>
 </body>
 </html>
